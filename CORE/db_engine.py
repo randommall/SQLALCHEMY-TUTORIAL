@@ -1,9 +1,10 @@
 from os import getenv
 from dotenv import load_dotenv
-
+from datetime import datetime
 from sqlalchemy import (create_engine, MetaData,
                         Table, Column, String,
-                        Integer, ForeignKey,
+                        Integer, DateTime,
+                        ForeignKey,
                         select, insert)
 
 
@@ -16,7 +17,7 @@ DB_NAME = getenv('DB_NAME')
 
 con_string = f'mysql+mysqlconnector://{DB_USER}:{DB_PWD}@{DB_HOST}/{DB_NAME}'
 
-mysql_engine = create_engine(con_string, echo=True)
+mysql_engine = create_engine(con_string)
 
 # POSTGRE_USER = getenv('POSTGRE_USER')
 # POSTGRE_PWD = getenv('POSTGRE_PWD')
@@ -34,24 +35,40 @@ users = Table('users', metadata,
               Column('id', Integer, primary_key=True, autoincrement=True),
               Column('name', String(60), nullable=False),
               Column('email', String(60), nullable=False),
-              Column('age', Integer))
+              Column('age', Integer),
+              Column('created_at', DateTime, default=datetime.now),
+              Column('updated_at', DateTime, default=datetime.now))
 
-accounts = Table('accounts', metadata,
-              Column('id', Integer, primary_key=True, autoincrement=True),
-              Column('type', String(60), default='savings'),
-              Column('user_id', Integer, ForeignKey('users.id', ondelete='SET NULL', name='fk_accounts_user_id')))
+orders = Table('orders', metadata,
+               Column('id', Integer, primary_key=True),
+               Column('item', String(20)),
+               Column('user_id', Integer, ForeignKey('users.id')),
+               Column('created_at', DateTime, default=datetime.now)
+               )
 
-addresses = Table('addresses', metadata,
-              Column('id', Integer, primary_key=True, autoincrement=True),
-              Column('user_id', Integer, ForeignKey('users.id', ondelete='SET NULL', name='fk_addresses_user_id')),
-              Column('address', String(60), nullable=False, default='savings'),)
+order_counts = Table('order_counts', metadata,
+                    Column('id', Integer, primary_key=True, autoincrement=True),
+                    Column('user_id', Integer, ForeignKey('users.id', ondelete='SET NULL')),
+                    Column('order_count', Integer, default=0),
+                    Column('created_at', DateTime, default=datetime.now),
+                    Column('updated_at', DateTime, default=datetime.now))
 
-employees = Table('employees', metadata,
-                  Column('id', Integer, primary_key=True, autoincrement=True),
-                  Column('name', String(128), nullable=False),
-                  Column('email', String(128), nullable=False),
-                  Column('position', String(128), nullable=False),
-                  Column("manager_id", Integer, ForeignKey("employees.id", name="fk_employees_manager_id", ondelete='SET NULL')))
+# accounts = Table('accounts', metadata,
+#               Column('id', Integer, primary_key=True, autoincrement=True),
+#               Column('type', String(60), default='savings'),
+#               Column('user_id', Integer, ForeignKey('users.id', ondelete='SET NULL', name='fk_accounts_user_id')))
+
+# addresses = Table('addresses', metadata,
+#               Column('id', Integer, primary_key=True, autoincrement=True),
+#               Column('user_id', Integer, ForeignKey('users.id', ondelete='SET NULL', name='fk_addresses_user_id')),
+#               Column('address', String(60), nullable=False, default='savings'))
+
+# employees = Table('employees', metadata,
+#                   Column('id', Integer, primary_key=True, autoincrement=True),
+#                   Column('name', String(128), nullable=False),
+#                   Column('email', String(128), nullable=False),
+#                   Column('position', String(128), nullable=False),
+#                   Column("manager_id", Integer, ForeignKey("employees.id", name="fk_employees_manager_id", ondelete='SET NULL')))
 
 
 # drop tables
@@ -65,4 +82,4 @@ employees = Table('employees', metadata,
 # drop single table
 # users.drop(mysql_engine)
 
-__all__ = ['mysql_engine', 'users', 'addresses', 'employees', 'accounts', 'insert', 'select']
+__all__ = ['mysql_engine', 'users', 'orders', 'order_counts']
